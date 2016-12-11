@@ -31,7 +31,11 @@ func StateHandler(config gologin.CookieConfig, success http.Handler) http.Handle
 // LoginHandler handles Google login requests by reading the state value from
 // the ctx and redirecting requests to the AuthURL with that state value.
 func LoginHandler(config *oauth2.Config, failure http.Handler) http.Handler {
-	return oauth2Login.LoginHandler(config, failure)
+	// PromptSelectAccount allows a user who has multiple accounts at the authorization server
+	// to select amongst the multiple accounts that they may have current sessions for.
+	// eg: https://developers.google.com/identity/protocols/OpenIDConnect
+	promptSelectAccount := oauth2.SetAuthURLParam("prompt", "select_account")
+	return oauth2Login.LoginHandler(config, failure, promptSelectAccount)
 }
 
 // CallbackHandler handles Google redirection URI requests and adds the Google
