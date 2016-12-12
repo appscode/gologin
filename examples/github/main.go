@@ -45,8 +45,8 @@ func New(config *Config) *http.ServeMux {
 	}
 	// state param cookies require HTTPS by default; disable for localhost development
 	stateConfig := gologin.DebugOnlyCookieConfig
-	mux.Handle("/github/login", github.StateHandler(stateConfig, github.LoginHandler(oauth2Config, nil)))
-	mux.Handle("/github/callback", github.StateHandler(stateConfig, github.CallbackHandler(oauth2Config, issueSession(), nil)))
+	mux.Handle("/github/login", github.CSRFHandler(stateConfig, github.LoginHandler(oauth2Config, nil)))
+	mux.Handle("/github/callback", github.CSRFHandler(stateConfig, github.CallbackHandler(oauth2Config, issueSession(), nil)))
 	return mux
 }
 

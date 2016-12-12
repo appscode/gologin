@@ -46,8 +46,8 @@ func New(config *Config) *http.ServeMux {
 	}
 	// state param cookies require HTTPS by default; disable for localhost development
 	stateConfig := gologin.DebugOnlyCookieConfig
-	mux.Handle("/facebook/login", facebook.StateHandler(stateConfig, facebook.LoginHandler(oauth2Config, nil)))
-	mux.Handle("/facebook/callback", facebook.StateHandler(stateConfig, facebook.CallbackHandler(oauth2Config, issueSession(), nil)))
+	mux.Handle("/facebook/login", facebook.CSRFHandler(stateConfig, facebook.LoginHandler(oauth2Config, nil)))
+	mux.Handle("/facebook/callback", facebook.CSRFHandler(stateConfig, facebook.CallbackHandler(oauth2Config, issueSession(), nil)))
 	return mux
 }
 

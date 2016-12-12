@@ -16,7 +16,7 @@ var (
 	ErrInvalidState = errors.New("oauth2: Invalid OAuth2 state parameter")
 )
 
-// StateHandler checks for a state cookie. If found, the state value is read
+// CSRFHandler checks for a state cookie. If found, the state value is read
 // and added to the ctx. Otherwise, a non-guessable value is added to the ctx
 // and to a (short-lived) state cookie issued to the requester.
 //
@@ -24,7 +24,7 @@ var (
 // state params differently, write a http.Handler which sets the ctx state,
 // using oauth2 WithState(ctx, state) since it is required by LoginHandler
 // and CallbackHandler.
-func StateHandler(config gologin.CookieConfig, success http.Handler) http.Handler {
+func CSRFHandler(config gologin.CookieConfig, success http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		cookie, err := req.Cookie(config.Name)

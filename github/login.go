@@ -15,7 +15,7 @@ var (
 	ErrUnableToGetGithubUser = errors.New("github: unable to get Github User")
 )
 
-// StateHandler checks for a state cookie. If found, the state value is read
+// CSRFHandler checks for a state cookie. If found, the state value is read
 // and added to the ctx. Otherwise, a non-guessable value is added to the ctx
 // and to a (short-lived) state cookie issued to the requester.
 //
@@ -23,8 +23,8 @@ var (
 // state params differently, write a http.Handler which sets the ctx state,
 // using oauth2 WithState(ctx, state) since it is required by LoginHandler
 // and CallbackHandler.
-func StateHandler(config gologin.CookieConfig, success http.Handler) http.Handler {
-	return oauth2Login.StateHandler(config, success)
+func CSRFHandler(config gologin.CookieConfig, success http.Handler) http.Handler {
+	return oauth2Login.CSRFHandler(config, success)
 }
 
 // LoginHandler handles Github login requests by reading the state value from

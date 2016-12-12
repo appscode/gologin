@@ -46,11 +46,11 @@ config := &oauth2.Config{
 }
 mux := http.NewServeMux()
 stateConfig := gologin.DebugOnlyCookieConfig
-mux.Handle("/login", github.StateHandler(stateConfig, github.LoginHandler(config, nil)))
-mux.Handle("/callback", github.StateHandler(stateConfig, github.CallbackHandler(config, issueSession(), nil)))
+mux.Handle("/login", github.CSRFHandler(stateConfig, github.LoginHandler(config, nil)))
+mux.Handle("/callback", github.CSRFHandler(stateConfig, github.CallbackHandler(config, issueSession(), nil)))
 ```
 
-The `StateHandler` checks for an OAuth2 state parameter cookie, generates a non-guessable state as a short-lived cookie if missing, and passes the state value in the ctx. The `CookieConfig` allows the cookie name or expiration (default 60 seconds) to be configured. In production, use a config like `gologin.DefaultCookieConfig` which sets *Secure* true to require cookies be sent over HTTPS. If you wish to persist state parameters a different way, you may chain your own `http.Handler`. ([info](#state-parameters))
+The `CSRFHandler` checks for an OAuth2 state parameter cookie, generates a non-guessable state as a short-lived cookie if missing, and passes the state value in the ctx. The `CookieConfig` allows the cookie name or expiration (default 60 seconds) to be configured. In production, use a config like `gologin.DefaultCookieConfig` which sets *Secure* true to require cookies be sent over HTTPS. If you wish to persist state parameters a different way, you may chain your own `http.Handler`. ([info](#state-parameters))
 
 The `github` `LoginHandler` reads the state from the ctx and redirects to the AuthURL (at github.com) to prompt the user to grant access. Passing nil for the `failure` handler just means the `DefaultFailureHandler` should be used, which reports errors. ([info](#failure-handlers))
 
@@ -116,7 +116,7 @@ See the [Twitter tutorial](examples/twitter) for a web app you can run from the 
 
 ### State Parameters
 
-OAuth2 `StateHandler` implements OAuth 2 [RFC 6749](https://tools.ietf.org/html/rfc6749) 10.12 CSRF Protection using non-guessable values in short-lived HTTPS-only cookies to provide reasonable assurance the user in the login phase and callback phase are the same. If you wish to implement this differently, write a `http.Handler` which sets a *state* in the ctx, which is expected by LoginHandler and CallbackHandler.
+OAuth2 `CSRFHandler` implements OAuth 2 [RFC 6749](https://tools.ietf.org/html/rfc6749) 10.12 CSRF Protection using non-guessable values in short-lived HTTPS-only cookies to provide reasonable assurance the user in the login phase and callback phase are the same. If you wish to implement this differently, write a `http.Handler` which sets a *state* in the ctx, which is expected by LoginHandler and CallbackHandler.
 
 You may use `oauth2.WithState(context.Context, state string)` for this. [docs](https://godoc.org/github.com/dghubble/gologin/oauth2#WithState)
 
