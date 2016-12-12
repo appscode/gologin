@@ -3,6 +3,7 @@ package oauth2
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -34,6 +35,58 @@ func CSRFHandler(config gologin.CookieConfig, success http.Handler) http.Handler
 		} else {
 			// add Cookie with a random state
 			val := randomState()
+			http.SetCookie(w, internal.NewCookie(config, val))
+			ctx = WithState(ctx, val)
+		}
+		success.ServeHTTP(w, req.WithContext(ctx))
+	}
+	return http.HandlerFunc(fn)
+}
+
+// http://stackoverflow.com/a/7722099
+type Oauth2State struct {
+	CSRF       string `json:"csrf" url:"csrf"`
+	RedirectTo string `json:"redirectTo" url:"redirectTo"`
+	Transport  string `json:"transport" url:"transport"` // hash, query
+}
+
+func (s *Oauth2State) Encode() string {
+	data, _ := json.Marshal(s)
+	return base64.URLEncoding.EncodeToString(data)
+}
+
+func (s *Oauth2State) Decode(state string) {
+	data, _ := base64.URLEncoding.DecodeString(state)
+	json.Unmarshal(data, s)
+}
+
+const (
+	KeyRedirectTo = "redirectTo"
+	KeyTransport  = "transport"
+)
+
+// HostedLoginHandler checks for a state cookie. If found, the state value is read
+// and added to the ctx. Otherwise, a non-guessable value is added to the ctx
+// and to a (short-lived) state cookie issued to the requester.
+//
+// Implements OAuth 2 RFC 6749 10.12 CSRF Protection. If you wish to issue
+// state params differently, write a ContextHandler which sets the ctx state,
+// using oauth2 WithState(ctx, state) since it is required by LoginHandler
+// and CallbackHandler.
+func HostedLoginHandler(config gologin.CookieConfig, success http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
+		cookie, err := req.Cookie(config.Name)
+		if err == nil {
+			// add the cookie state to the ctx
+			ctx = WithState(ctx, cookie.Value)
+		} else {
+			state := Oauth2State{
+				CSRF:       randomState(),
+				RedirectTo: req.URL.Query().Get(KeyRedirectTo),
+				Transport:  req.URL.Query().Get(KeyTransport),
+			}
+			val := state.Encode()
 			http.SetCookie(w, internal.NewCookie(config, val))
 			ctx = WithState(ctx, val)
 		}
