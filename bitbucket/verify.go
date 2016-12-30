@@ -10,11 +10,28 @@ const bitbucketAPI = "https://bitbucket.org/api/2.0/"
 
 // User is a Bitbucket user.
 type User struct {
+	UUID        string `json:"uuid"`
 	Username    string `json:"username"`
 	DisplayName string `json:"display_name"`
-	Website     string `json:"website"`
-	Location    string `json:"location"`
-	Type        string `json:"type"` // user, team
+	Links       struct {
+		Avatar struct {
+			Href string `json:"href"`
+		} `json:"avatar"`
+		HTML struct {
+			Href string `json:"href"`
+		} `json:"html"`
+	} `json:"links"`
+	Website          string `json:"website"`
+	Email            string `json:"email"`
+	IsEmailConfirmed bool   `json:"is_confirmed"`
+}
+
+type UserEmails struct {
+	Values []struct {
+		Email       string `json:"email"`
+		IsConfirmed bool   `json:"is_confirmed"`
+		IsPrimary   bool   `json:"is_primary"`
+	} `json:"values"`
 }
 
 // client is a Bitbucket client for obtaining a User.
@@ -35,5 +52,16 @@ func newClient(httpClient *http.Client) *client {
 func (c *client) CurrentUser() (*User, *http.Response, error) {
 	user := new(User)
 	resp, err := c.sling.New().Get("user").ReceiveSuccess(user)
+	if err == nil {
+		emails := new(UserEmails)
+		_, err = c.sling.New().Get("user/emails").ReceiveSuccess(emails)
+		for _, email := range emails.Values {
+			if email.IsPrimary {
+				user.Email = email.Email
+				user.IsEmailConfirmed = email.IsConfirmed
+				break
+			}
+		}
+	}
 	return user, resp, err
 }
