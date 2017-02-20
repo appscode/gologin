@@ -55,7 +55,7 @@ func twitterHandler(config *oauth1.Config, success, failure http.Handler) http.H
 		accountVerifyParams := &twitter.AccountVerifyParams{
 			IncludeEntities: twitter.Bool(false),
 			SkipStatus:      twitter.Bool(true),
-			IncludeEmail:    twitter.Bool(false),
+			IncludeEmail:    twitter.Bool(true),
 		}
 		user, resp, err := twitterClient.Accounts.VerifyCredentials(accountVerifyParams)
 		err = validateResponse(user, resp, err)
